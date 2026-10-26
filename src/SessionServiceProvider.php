@@ -32,14 +32,14 @@ final class SessionServiceProvider extends ServiceProvider
                 assert($cache instanceof CacheInterface);
 
                 return new CacheSessionStore($cache);
-            })
+            })->uses(CacheInterface::class)
             ->scoped(SessionContext::class)
             ->scoped(SessionInterface::class, static function (ServiceResolverInterface $r): SessionInterface {
                 $context = $r->get(SessionContext::class);
                 assert($context instanceof SessionContext);
 
                 return $context->session();
-            })
+            })->uses(SessionContext::class)
             ->scoped(SessionMiddleware::class, static function (ServiceResolverInterface $r): SessionMiddleware {
                 $config = $r->get(ConfigurationInterface::class);
                 $store = $r->get(SessionStoreInterface::class);
@@ -47,7 +47,7 @@ final class SessionServiceProvider extends ServiceProvider
                 assert($store instanceof SessionStoreInterface && $context instanceof SessionContext);
 
                 return new SessionMiddleware($store, $context, $config->string('session.cookie', 'zana_session'), $config->int('session.lifetime', 7200));
-            });
+            })->uses(ConfigurationInterface::class, SessionStoreInterface::class, SessionContext::class);
     }
 
     public function origin(): string
