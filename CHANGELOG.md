@@ -3,6 +3,13 @@
 All Zana packages share one version number and are released together. A release that did
 not change this package is not listed.
 
+## 2.19.1 — Unreleased
+
+### Security
+
+- `SessionMiddleware` no longer writes back a session that is not stored any more, so a request still running when the
+  user signs out, or when the id is regenerated, does not bring the old session back.
+
 ## 2.4.0 — 2026-10-26
 
 ### Changed

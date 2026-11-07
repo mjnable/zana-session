@@ -110,6 +110,33 @@ final class SessionTest extends TestCase
         (new Session())->set('_flash', 'x');
     }
 
+    public function testASessionSignedOutDuringASlowerRequestStaysSignedOut(): void
+    {
+        $id = str_repeat('c', 64);
+        foreach (['unchanged' => static function (): void {}, 'changed' => static function (Session $session): void { $session->set('basket', 3); }] as $name => $slow) {
+            $this->store->sessions[$id] = ['_security.user' => 'amani'];
+
+            $this->visit(function (Session $session) use ($slow, $id): void {
+                $this->visit(static fn (Session $other) => $other->invalidate(), cookie: $id);   // logout finishes first
+                $slow($session);
+            }, cookie: $id);
+
+            $this->assertArrayNotHasKey($id, $this->store->sessions, "{$name}: the old cookie must not work again");
+        }
+    }
+
+    public function testARegeneratedIdIsNotWrittenBack(): void
+    {
+        $id = str_repeat('d', 64);
+        $this->store->sessions[$id] = ['step' => 'password'];
+
+        $this->visit(function () use ($id): void {
+            $this->visit(static fn (Session $other) => $other->regenerate(), cookie: $id);
+        }, cookie: $id);
+
+        $this->assertArrayNotHasKey($id, $this->store->sessions);
+    }
+
     /**
      * @param callable(Session): mixed $action
      */
